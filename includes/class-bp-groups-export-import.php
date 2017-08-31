@@ -153,6 +153,10 @@ class Bp_Groups_Export_Import {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+		$this->loader->add_action( 'admin_menu', $plugin_admin, 'bpgei_add_settings_page' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'bpgei_register_bp_groups_export_settings' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'bpgei_register_bp_groups_import_settings' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'bpgei_register_support_settings' );
 
 	}
 
