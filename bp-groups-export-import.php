@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       BuddyPress Groups Export & Import
  * Plugin URI:        https://wbcomdesigns.com/
- * Description:       This plugin helps the site administrator to export & import buddypress groups.
+ * Description:       This plugin helps the site administrator to <strong>export</strong> & <strong>import buddypress groups</strong>.
  * Version:           1.0.0
  * Author:            Wbcom Designs
  * Author URI:        https://wbcomdesigns.com/
@@ -32,6 +32,14 @@ if ( ! defined( 'WPINC' ) ) {
 
 if ( ! defined( 'BPGEI_TEXT_DOMAIN' ) ) {
 	define( 'BPGEI_TEXT_DOMAIN', 'bp-groups-export-import' );
+}
+
+if ( ! defined( 'BPGEI_PLUGIN_URL' ) ) {
+	define( 'BPGEI_PLUGIN_URL', plugin_dir_url(__FILE__) );
+}
+
+if ( ! defined( 'BPGEI_PLUGIN_PATH' ) ) {
+	define( 'BPGEI_PLUGIN_PATH', plugin_dir_path(__FILE__) );
 }
 
 /**
@@ -71,14 +79,6 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-bp-groups-export-import.ph
  * @since    1.0.0
  */
 function run_bp_groups_export_import() {
-
-	if ( ! defined( 'BPGEI_PLUGIN_URL' ) ) {
-		define( 'BPGEI_PLUGIN_URL', plugin_dir_url(__FILE__) );
-	}
-
-	if ( ! defined( 'BPGEI_PLUGIN_PATH' ) ) {
-		define( 'BPGEI_PLUGIN_PATH', plugin_dir_path(__FILE__) );
-	}
 
 	$plugin = new Bp_Groups_Export_Import();
 	$plugin->run();

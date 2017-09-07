@@ -62,8 +62,9 @@ class Bp_Groups_Export_Import_Admin {
 	public function enqueue_styles() {
 
 		if( stripos( $_SERVER['REQUEST_URI'], $this->plugin_name ) ) {
-			wp_enqueue_style( $this->plugin_name.'font-awesome', plugin_dir_url( __FILE__ ) . 'css/font-awesome.min.css' );
-			wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/bp-groups-export-import-admin.css' );
+			wp_enqueue_style( $this->plugin_name.'font-awesome', BPGEI_PLUGIN_URL . 'admin/css/font-awesome.min.css' );
+			wp_enqueue_style( $this->plugin_name.'selectize-css', BPGEI_PLUGIN_URL . 'admin/css/selectize.css' );
+			wp_enqueue_style( $this->plugin_name, BPGEI_PLUGIN_URL . 'admin/css/bp-groups-export-import-admin.css' );
 		}
 
 	}
@@ -76,7 +77,17 @@ class Bp_Groups_Export_Import_Admin {
 	public function enqueue_scripts() {
 
 		if( stripos( $_SERVER['REQUEST_URI'], $this->plugin_name ) ) {
-			wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/bp-groups-export-import-admin.js', array( 'jquery' ) );
+			wp_enqueue_script( $this->plugin_name.'-selectize', BPGEI_PLUGIN_URL . 'admin/js/selectize.min.js', array( 'jquery' ) );
+			wp_enqueue_script( $this->plugin_name.'-xls-export', BPGEI_PLUGIN_URL . 'admin/js/excelexportjs.js', array( 'jquery' ) );
+			wp_enqueue_script( $this->plugin_name, BPGEI_PLUGIN_URL . 'admin/js/bp-groups-export-import-admin.js', array( 'jquery' ) );
+
+			wp_localize_script(
+				$this->plugin_name,
+				'bpgei_admin_js_object',
+				array(
+					'ajaxurl'		=> admin_url('admin-ajax.php')
+				)
+			);
 		}
 
 	}
@@ -101,8 +112,8 @@ class Bp_Groups_Export_Import_Admin {
 				<h2 class="bpgei-plugin-heading"><?php _e( 'BuddyPress Groups Export & Import', BPGEI_TEXT_DOMAIN );?></h2>
 				<div class="bpgei-extra-actions">
 					<button type="button" class="button button-secondary" onclick="window.open('https://wbcomdesigns.com/contact/', '_blank');"><i class="fa fa-envelope" aria-hidden="true"></i> <?php _e( 'Email Support', BPGEI_TEXT_DOMAIN )?></button>
-					<button type="button" class="button button-secondary" onclick="window.open('', '_blank');"><i class="fa fa-file" aria-hidden="true"></i> <?php _e( 'User Manual', BPGEI_TEXT_DOMAIN )?></button>
-					<button type="button" class="button button-secondary" onclick="window.open('', '_blank');"><i class="fa fa-star" aria-hidden="true"></i> <?php _e( 'Rate Us on WordPress.org', BPGEI_TEXT_DOMAIN )?></button>
+					<button disabled type="button" class="button button-secondary" onclick="window.open('', '_blank');"><i class="fa fa-file" aria-hidden="true"></i> <?php _e( 'User Manual', BPGEI_TEXT_DOMAIN )?></button>
+					<button disabled type="button" class="button button-secondary" onclick="window.open('', '_blank');"><i class="fa fa-star" aria-hidden="true"></i> <?php _e( 'Rate Us on WordPress.org', BPGEI_TEXT_DOMAIN )?></button>
 				</div>
 			</div>
 			<?php $this->bpgei_plugin_settings_tabs();?>
@@ -175,6 +186,81 @@ class Bp_Groups_Export_Import_Admin {
 	public function bpgei_support_settings_content() {
 		if (file_exists(dirname(__FILE__) . '/includes/bp-groups-export-import-support.php')) {
 			require_once( dirname(__FILE__) . '/includes/bp-groups-export-import-support.php' );
+		}
+	}
+
+	/**
+	 * Ajax served, to export the groups
+	 */
+	public function bpgei_export_groups() {
+		if( isset( $_POST['action'] ) && $_POST['action'] == 'bpgei_export_groups' ) {
+			$g_status = array();
+			if( !empty( $_POST['g_status'] ) ) {
+				$g_status = wp_slash( $_POST['g_status'] );
+			}
+
+			$g_types = array();
+			if( !empty( $_POST['g_types'] ) ) {
+				$g_types = wp_slash( $_POST['g_types'] );
+			}
+
+			$bp_grp_args = array(
+				'per_page'			=> 99999,
+				'orderby'			=> 'date_created',
+				'order'				=> 'DESC',
+				'status'			=> $g_status,
+				'group_type__in'	=> $g_types
+			);
+			$bp_groups = BP_Groups_Group::get( $bp_grp_args );
+			$groups = $bp_groups['groups'];
+			$bp_groups_data = array();
+			foreach( $groups as $group ) {
+				$forum_data = groups_get_groupmeta( $group->id, 'forum_id', true );
+				$forum_id = $forum_name = '-';
+				if( !empty( $forum_data ) ){
+					$forum_id = $forum_data[0];
+					$forum_name = $group->name;
+				}
+
+				//GROUP COVER IMAGE URL
+				$group_cover_image_url = bp_attachments_get_attachment('url', array(
+					'object_dir'	=>	'groups',
+					'item_id'		=>	$group->id,
+				));
+				//GROUP THUMBNAIL
+				$avatar = bp_core_fetch_avatar( array(
+					'item_id'	=>	$group->id,
+					'object'	=>	'group',
+					'html'		=>	false
+				) );
+
+				$grp_invite_status = ucfirst( groups_get_groupmeta( $group->id, 'invite_status', true ) );
+				$invite_status = !empty( $grp_invite_status ) ? $grp_invite_status : '-';
+
+				$temp													=	array();
+				$temp[__( 'Group ID', BPGEI_TEXT_DOMAIN )]				=	"$group->id";
+				$temp[__( 'Group Name', BPGEI_TEXT_DOMAIN )]				=	$group->name;
+				$temp[__( 'Group Description', BPGEI_TEXT_DOMAIN )]		=	$group->description;
+				$temp[__( 'Group Status', BPGEI_TEXT_DOMAIN )]			=	ucfirst( $group->status );
+				$temp[__( 'Group Created By', BPGEI_TEXT_DOMAIN )]		=	get_userdata( $group->creator_id )->data->user_login;
+				$temp[__( 'Group Created On', BPGEI_TEXT_DOMAIN )]		=	explode(' ', $group->date_created)[0];
+				$temp[__( 'Total Members', BPGEI_TEXT_DOMAIN )]			=	groups_get_groupmeta( $group->id, 'total_member_count', true );
+				$temp[__( 'Is Forum Enabled', BPGEI_TEXT_DOMAIN )]		=	$group->enable_forum == 0 ? 'No' : 'Yes';
+				$temp[__( 'Forum ID', BPGEI_TEXT_DOMAIN )]				=	$forum_id;
+				$temp[__( 'Forum Name', BPGEI_TEXT_DOMAIN )]				=	$forum_name;
+				$temp[__( 'Group Invite Status', BPGEI_TEXT_DOMAIN )]		=	$invite_status;
+				$temp[__( 'Avatar', BPGEI_TEXT_DOMAIN )]				=	$avatar;
+				$temp[__( 'Cover Image', BPGEI_TEXT_DOMAIN )]			=	$group_cover_image_url;
+				$bp_groups_data[]										=	$temp;
+			}
+
+			$response = array(
+				'message'			=>	__( 'Groups Exported!', BPGEI_TEXT_DOMAIN ),
+				'groups_exported'	=>	'Groups exported: '.$bp_groups['total'],
+				'groups'			=>	$bp_groups_data
+			);
+			wp_send_json_success( $response );
+			die;
 		}
 	}
 

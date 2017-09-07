@@ -157,6 +157,7 @@ class Bp_Groups_Export_Import {
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'bpgei_register_bp_groups_export_settings' );
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'bpgei_register_bp_groups_import_settings' );
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'bpgei_register_support_settings' );
+		$this->loader->add_action( 'wp_ajax_bpgei_export_groups', $plugin_admin, 'bpgei_export_groups' );
 
 	}
 
