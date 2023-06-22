@@ -239,12 +239,12 @@
 function getColumns( paramData ) {
     console.log( paramData[0] );
     var header = [];
-    $.each(paramData[0], function (key, value) {
-        var obj = {}
-        obj["headertext"] = key;
-        obj["datatype"] = "string";
-        obj["datafield"] = key;
-        header.push(obj);
+    jQuery.each(paramData[0], function (key, value) {
+      var obj = {};
+      obj["headertext"] = key;
+      obj["datatype"] = "string";
+      obj["datafield"] = key;
+      header.push(obj);
     });
 	return header;
 }
